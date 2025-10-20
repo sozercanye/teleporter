@@ -41,6 +41,7 @@ await teleporter.to_android('result/tgnet.dat', 'result/userconfing.xml')
 
 #### Creating android session from desktop session
 ```python
-teleporter = await Teleporter.desktop('tdata')
-await teleporter.to_android('result/tgnet.dat', 'result/userconfing.xml')
+teleporters = await Teleporter.desktop('tdata')
+for teleporter in teleporters:
+    await teleporter.to_android(f'result/{teleporter.id}/tgnet.dat', f'result/{teleporter.id}/userconfing.xml')
 ```

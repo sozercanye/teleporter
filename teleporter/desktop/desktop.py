@@ -1,3 +1,8 @@
+"""
+Desktop class is based on opentele
+https://github.com/thedemons/opentele/tree/1a6f0816eac47ff3cb907af72ed9f8cbbbe8fba0/src/td
+"""
+
 from __future__ import annotations
 from typing import Awaitable
 from pathlib import Path
@@ -10,7 +15,7 @@ class Desktop:
     """The maximum amount of accounts a client can have"""
 
     default_key_file_path = 'data'
-    """See `TDesktop.key_file`"""
+    """See `Desktop.key_file`"""
 
     performance_mode = True
     """
