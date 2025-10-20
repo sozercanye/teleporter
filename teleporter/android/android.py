@@ -9,8 +9,6 @@ import aiofiles
 import teleporter
 from teleporter.android import NativeByteBuffer, Auth, Headers, Datacenter
 
-USER_ID_PATTERN = re.compile(rb'<string name="user">(.+)</string>')
-
 class Int(bytes):
     SIZE = 4
 
@@ -25,6 +23,8 @@ class Long(Int):
     SIZE = 8
 
 class Android:
+    USER_ID_PATTERN = re.compile(rb'<string name="user">(.+)</string>')
+
     @classmethod
     async def android(cls: type['teleporter.Teleporter'],
         tgnet: bytes | str | Path,
@@ -45,7 +45,7 @@ class Android:
             else:
                 async with aiofiles.open(userconfig, 'rb') as f:
                     content = await f.read()
-            b = BytesIO(base64.b64decode(USER_ID_PATTERN.search(content).group(1).strip().replace(b'&#10;', b'')))
+            b = BytesIO(base64.b64decode(cls.USER_ID_PATTERN.search(content).group(1).strip().replace(b'&#10;', b'')))
             kwargs = {
                 'constructor_id': int.from_bytes(b.read(4), 'little'),
                 'flags': Int._read(b),

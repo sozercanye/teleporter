@@ -4,11 +4,11 @@ https://github.com/thedemons/opentele/tree/1a6f0816eac47ff3cb907af72ed9f8cbbbe8f
 """
 
 from __future__ import annotations
-from typing import Awaitable
 from pathlib import Path
 from hashlib import md5
 
-from .utils import create_local_key, decrypt, file, read
+import teleporter
+from teleporter.desktop import create_local_key, decrypt, file, read
 
 class Desktop:
     max_accounts = 3
@@ -32,11 +32,11 @@ class Desktop:
     wide_ids_tag: int = 2**32 - 1
 
     @classmethod
-    async def _read(cls,
+    async def desktop(cls: type['teleporter.Teleporter'],
         tdata: str | Path,
         passcode: str | bytes = b'',
         key_file_path: str | Path = default_key_file_path
-    ) -> list[tuple[int, bytes, int]]:
+    ) -> list['teleporter.Teleporter']:
         if isinstance(passcode, str):
             passcode = passcode.encode('ascii')
         if isinstance(key_file_path, Path):
@@ -92,13 +92,5 @@ class Desktop:
                 ]
                 auth_key = next(auth_key for auth_key_dc_id, auth_key in auth_keys if auth_key_dc_id == dc_id)
 
-                accounts.append((dc_id, auth_key, id))
-
+                accounts.append(cls(dc_id, auth_key, id))
         return accounts
-
-    def __new__(cls,
-        tdata: str | Path,
-        passcode: str | bytes = b'',
-        key_file_path: str | Path = default_key_file_path
-    ) -> Awaitable[list[tuple[int, bytes, int]]]:
-        return cls._read(tdata, passcode, key_file_path)

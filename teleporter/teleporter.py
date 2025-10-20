@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 from teleporter.android import Android
-from teleporter.desktop import Desktop_
+from teleporter.desktop import Desktop
 
-class Teleporter(Android, Desktop_):
+class Teleporter(Android, Desktop):
     __slots__ = ('dc_id', 'auth_key', 'id', 'constructor_id', 'flags', 'flags2')
 
     def __init__(self,

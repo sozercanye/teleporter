@@ -1,2 +1,2 @@
-aiofiles~=25.1.0
+aiofiles
 TgCrypto~=1.2.5
