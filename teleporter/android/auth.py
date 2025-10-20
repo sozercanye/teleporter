@@ -22,5 +22,5 @@ class Auth:
         self.auth_key_media_temp_id = get_auth_key_id(self.auth_key_media_temp)
         self.authorized = 1
 
-    def __str__(self):
-        return str(self.auth_key_perm)
+    def __str__(self) -> str:
+        return self.auth_key_perm.hex()

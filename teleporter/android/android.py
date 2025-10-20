@@ -1,3 +1,4 @@
+from __future__ import annotations
 from pathlib import Path
 import re
 from io import BytesIO
@@ -6,7 +7,7 @@ import base64
 import aiofiles
 
 import teleporter
-from teleporter.session import Session, NativeByteBuffer
+from teleporter.android import NativeByteBuffer, Auth, Headers, Datacenter
 
 USER_ID_PATTERN = re.compile(rb'<string name="user">(.+)</string>')
 
@@ -27,7 +28,7 @@ class Android:
     @classmethod
     async def android(cls: type['teleporter.Teleporter'],
         tgnet: bytes | str | Path,
-        userconfig: bytes | str | Path
+        userconfig: bytes | str | Path = None
     ) -> 'teleporter.Teleporter':
         if isinstance(tgnet, bytes): content = tgnet
         else:
@@ -35,23 +36,43 @@ class Android:
                 content = await f.read()
 
         buffer = NativeByteBuffer(content)
-        session = Session(buffer._read_headers(), buffer._read_datacenters())
+        dc_id = buffer._read_headers().dc_id
+        auth_key = next(datacenter.auth.auth_key_perm for datacenter in buffer._read_datacenters() if datacenter.dc_id == dc_id)
 
-        if isinstance(userconfig, bytes): content = userconfig
-        else:
-            async with aiofiles.open(userconfig, 'rb') as f:
-                content = await f.read()
+        kwargs = {}
+        if userconfig:
+            if isinstance(userconfig, bytes): content = userconfig
+            else:
+                async with aiofiles.open(userconfig, 'rb') as f:
+                    content = await f.read()
+            b = BytesIO(base64.b64decode(USER_ID_PATTERN.search(content).group(1).strip().replace(b'&#10;', b'')))
+            kwargs = {
+                'constructor_id': int.from_bytes(b.read(4), 'little'),
+                'flags': Int._read(b),
+                'flags2': Int._read(b),
+                'id': Long._read(b)
+            }
 
-        b = BytesIO(base64.b64decode(USER_ID_PATTERN.search(content).group(1).strip().replace(b'&#10;', b'')))
-        return cls(session=session, constructor_id=int.from_bytes(b.read(4), 'little'), flags=Int._read(b), flags2=Int._read(b), id=Long._read(b))
+        return cls(dc_id, auth_key, **kwargs)
 
     async def to_android(self: 'teleporter.Teleporter',
         tgnet: str | Path = None,
-        userconfig: str | Path = None
+        userconfig: str | Path = None,
+        is_test: bool = False,
+        version: int = 5,
+        current_dc_version: int = 13,
+        last_dc_init_version: int = 48502,
+        last_dc_media_init_version: int = 48502
     ) -> list[bytes, bytes] | bytes | None:
+        headers = Headers(self.dc_id, is_test, version)
+        datacenters = [Datacenter(
+            self.dc_id, Auth(self.auth_key),
+            current_dc_version, last_dc_init_version, last_dc_media_init_version
+        )]
+
         buffer = NativeByteBuffer()
-        buffer._write_front_headers(self.session.headers)
-        buffer._write_datacenters(self.session.datacenters.values())
+        buffer._write_front_headers(headers)
+        buffer._write_datacenters(datacenters)
         buffer._write_buffer_length()
         tgnet_value = buffer.get_value()
 

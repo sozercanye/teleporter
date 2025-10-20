@@ -6,7 +6,7 @@ class IP:
     def __init__(self,
         type: Literal['Ipv4', 'Ipv6', 'Ipv4Download', 'Ipv6Download'],
         address: str,
-        port: int,
+        port: int = 443,
         flags: int = 0,
         secret: str = ''
     ):

@@ -3,47 +3,48 @@ NativeByteBuffer class is a full copy of telegram's class NativeByteBuffer
 https://github.com/DrKLO/Telegram/blob/master/TMessagesProj/jni/tgnet/NativeByteBuffer.cpp
 """
 
+from __future__ import annotations
 from typing import Literal
 from io import BytesIO
 import time
 
-from teleporter import session
-from teleporter.session.ip import IP
+from teleporter import android
+from teleporter.android.ip import IP
 
 class NativeByteBuffer:
     def __init__(self, data: bytes | bytearray = None):
         self.stream = BytesIO(data)
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.stream.getvalue())
 
-    def get_value(self):
+    def get_value(self) -> bytes:
         return self.stream.getvalue()
 
     def read_bytes(self, length: int) -> bytes:
         return self.stream.read(length)
 
-    def read_byte(self):
+    def read_byte(self) -> int:
         return self.read_bytes(1)[0]
 
-    def read_number(self, length: int, signed=True):
+    def read_number(self, length: int, signed: bool = True) -> int:
         return int.from_bytes(self.read_bytes(length), byteorder='little', signed=signed)
 
-    def read_int(self, signed=True):
+    def read_int(self, signed: bool = True) -> int:
         return self.read_number(4, signed=signed)
 
-    def read_long(self, signed=True):
+    def read_long(self, signed: bool = True) -> int:
         return self.read_number(8, signed=signed)
 
-    def read_bool(self):
+    def read_bool(self) -> bool:
         value = self.read_int(signed=False)
         if value == 0x997275b5:
             return True
         elif value == 0xbc799737:
             return False
-        raise BufferError('Unexpected byte value')
+        raise BufferError('Unexpected byte value.')
 
-    def read_byte_array(self):
+    def read_byte_array(self) -> bytes:
         sl = 1
         length = self.read_number(1, signed=False)
         if length >= 254:
@@ -58,19 +59,19 @@ class NativeByteBuffer:
         self.read_bytes(addition)
         return result
 
-    def read_string(self):
+    def read_string(self) -> str:
         return str(self.read_byte_array(), encoding='utf-8', errors='replace')
 
     def write_bytes(self, data: bytearray | bytes):
         self.stream.write(data)
 
-    def write_number(self, number: int, length: int, signed=True):
+    def write_number(self, number: int, length: int, signed: bool = True):
         self.write_bytes(number.to_bytes(length, byteorder='little', signed=signed))
 
-    def write_int(self, number: int, signed=True):
+    def write_int(self, number: int, signed: bool = True):
         self.write_number(number=number, length=4, signed=signed)
 
-    def write_long(self, number: int, signed=True):
+    def write_long(self, number: int, signed: bool = True):
         self.write_number(number=number, length=8, signed=signed)
 
     def write_bool(self, value: bool):
@@ -101,7 +102,7 @@ class NativeByteBuffer:
     def write_string(self, value: str):
         self.write_byte_array(value.encode())
 
-    def _write_front_headers(self, headers: session.Headers):
+    def _write_front_headers(self, headers: android.Headers):
         self.write_int(headers.version)
         self.write_bool(headers.is_test)
 
@@ -131,7 +132,7 @@ class NativeByteBuffer:
             self.write_int(0)
             self.write_long(0)
 
-    def _write_datacenters(self, datacenters: list[session.Datacenter]):
+    def _write_datacenters(self, datacenters: list[android.Datacenter]):
         self.write_int(len(datacenters))
         for datacenter in datacenters:
             self.write_int(datacenter.current_version)
@@ -191,9 +192,9 @@ class NativeByteBuffer:
         self.stream.seek(0)
         self.write_bytes(buffer_with_length.get_value())
 
-    def _read_headers(self) -> session.Headers:
+    def _read_headers(self) -> android.Headers:
         self.read_int()
-        headers = session.Headers(
+        headers = android.Headers(
             version=self.read_int(),
             is_test=self.read_bool()
         )
@@ -252,12 +253,12 @@ class NativeByteBuffer:
 
         return ip
 
-    def _read_datacenters(self) -> list[session.Datacenter]:
+    def _read_datacenters(self) -> list[android.Datacenter]:
         datacenters = []
         num_of_datacenters = self.read_int()
 
         for i in range(num_of_datacenters):
-            datacenter = session.Datacenter(
+            datacenter = android.Datacenter(
                 current_version=self.read_int(),
                 dc_id=self.read_int(),
                 last_init_version=self.read_int()
@@ -296,8 +297,8 @@ class NativeByteBuffer:
 
         return datacenters
 
-    def _auth(self, current_version: int) -> session.Auth:
-        auth = session.Auth()
+    def _auth(self, current_version: int) -> android.Auth:
+        auth = android.Auth()
         len_of_bytes = self.read_int(signed=False)
         if len_of_bytes != 0:
             auth.auth_key_perm = self.read_bytes(len_of_bytes)
@@ -324,16 +325,16 @@ class NativeByteBuffer:
         auth.authorized = self.read_int()
         return auth
 
-    def _read_salt(self, salts: list['session.Salt']):
+    def _read_salt(self, salts: list['android.Salt']):
         bytes_len = self.read_int()
         for x in range(bytes_len):
-            salt = session.Salt()
+            salt = android.Salt()
             salt.salt_valid_since = self.read_int()
             salt.salt_valid_until = self.read_int()
             salt.salt = self.read_long()
             salts.append(salt)
 
-    def _salt_info(self, current_version: int) -> list['session.Salt']:
+    def _salt_info(self, current_version: int) -> list['android.Salt']:
         salts = []
         self._read_salt(salts)
 

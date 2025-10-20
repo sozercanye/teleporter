@@ -4,7 +4,7 @@ Serializer and deserializer for Telegram Android sessions.
 
 ### Description
 
-This tool can be used to serialize and deserialize sessions on Telegram Android.
+This tool can be used to serialize and deserialize sessions on Telegram Android. And remove pin code.
 
 It can extract any information stored in files/tgnet.dat and all needed information from shared_prefs/userconfing.xml
 
@@ -29,12 +29,18 @@ from teleporter import Teleporter
 # if you have more than 1 account you would need to use tgnet.dat from /files/account(account_number)/tgnet.dat
 # and corresponding userconfig.xml file from /shared_prefs/userconfig(account_number).xml
 
-session = Teleporter.android('tgnet.dat', 'userconfing.xml')
-dc_id, auth_key, user_id = session.to_manual()
+teleporter = await Teleporter.android('tgnet.dat', 'userconfing.xml')
+teleporter.dc_id, teleporter.auth_key, teleporter.id
 ```
 
 #### Creating android session from dc id, auth key and user id
 ```python
-session = Teleporter.manual(dc_id, auth_key, user_id)
-session.to_android('result/tgnet.dat', 'result/userconfing.xml')
+teleporter = Teleporter(dc_id, auth_key, user_id)
+await teleporter.to_android('result/tgnet.dat', 'result/userconfing.xml')
+```
+
+#### Creating android session from desktop session
+```python
+teleporter = await Teleporter.desktop('tdata')
+await teleporter.to_android('result/tgnet.dat', 'result/userconfing.xml')
 ```
