@@ -64,15 +64,12 @@ class Android:
         last_dc_init_version: int = 48502,
         last_dc_media_init_version: int = 48502
     ) -> list[bytes, bytes] | bytes | None:
-        headers = Headers(self.dc_id, is_test, version)
-        datacenters = [Datacenter(
+        buffer = NativeByteBuffer()
+        buffer._write_front_headers(Headers(self.dc_id, is_test, version))
+        buffer._write_datacenters([Datacenter(
             self.dc_id, Auth(self.auth_key),
             current_dc_version, last_dc_init_version, last_dc_media_init_version
-        )]
-
-        buffer = NativeByteBuffer()
-        buffer._write_front_headers(headers)
-        buffer._write_datacenters(datacenters)
+        )])
         buffer._write_buffer_length()
         tgnet_value = buffer.get_value()
 
