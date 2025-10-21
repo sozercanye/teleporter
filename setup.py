@@ -10,7 +10,7 @@ setuptools.setup(
     name='teleporter',
     version=__version__,
     author='sozercanye',
-    description='Serializer and deserializer for Telegram Android sessions.',
+    description='Serializer and deserializer for Telegram Android and Desktop sessions.',
     long_description_content_type='text/markdown',
     long_description=long_description,
     url='https://github.com/sozercanye/teleporter',

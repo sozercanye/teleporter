@@ -1,10 +1,11 @@
 from __future__ import annotations
 
-from teleporter.android import Android
-from teleporter.desktop import Desktop
-from teleporter.session import Session
+from .android import Android
+from .desktop import Desktop
+from .session import Session
+from .web import Web
 
-class Teleporter(Android, Desktop, Session):
+class Teleporter(Android, Desktop, Session, Web):
     __slots__ = ('dc_id', 'auth_key', 'id', 'constructor_id')
 
     def __init__(self,
