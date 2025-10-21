@@ -46,8 +46,8 @@ class Android:
 
             constructor_id = Int._read(b)
             b.seek(2 * Int.SIZE, 1) # flags
-            id = Long._read(b)
-            return cls(dc_id, auth_key, id, constructor_id)
+            user_id = Long._read(b)
+            return cls(dc_id, auth_key, user_id, constructor_id)
         return cls(dc_id, auth_key)
 
     def to_android(self: 'teleporter.Teleporter',
@@ -72,7 +72,7 @@ class Android:
         b.write(Int(self.constructor_id))
         b.write(Int(0))
         b.write(Int(0))
-        b.write(Long(self.id))
+        b.write(Long(self.user_id))
         userconfig_value = b'''<?xml version='1.0' encoding='UTF-8' standalone='yes'?>
 <map>
     <string name="user">%s</string>

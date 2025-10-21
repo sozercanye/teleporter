@@ -19,5 +19,5 @@ class Web:
         return json.dumps({
             'dcId': self.dc_id,
             f'dc{self.dc_id}_auth_key': self.auth_key.hex(),
-            'userId': self.id
+            'userId': self.user_id
         }, separators=(',', ':'))
