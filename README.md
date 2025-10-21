@@ -48,7 +48,7 @@ teleporter = Teleporter.session('telethon.session')
 # Access session parameters
 teleporter.dc_id
 teleporter.auth_key
-teleporter.id
+teleporter.user_id
 
 # Serialize to Android format
 teleporter.to_android('tgnet.dat', 'userconfig.xml')
