@@ -29,19 +29,19 @@ from teleporter import Teleporter
 # if you have more than 1 account you would need to use tgnet.dat from /files/account(account_number)/tgnet.dat
 # and corresponding userconfig.xml file from /shared_prefs/userconfig(account_number).xml
 
-teleporter = await Teleporter.android('tgnet.dat', 'userconfing.xml')
+teleporter = Teleporter.android('tgnet.dat', 'userconfing.xml')
 teleporter.dc_id, teleporter.auth_key, teleporter.id
 ```
 
 #### Creating android session from dc id, auth key and user id
 ```python
 teleporter = Teleporter(dc_id, auth_key, user_id)
-await teleporter.to_android('result/tgnet.dat', 'result/userconfing.xml')
+teleporter.to_android('result/tgnet.dat', 'result/userconfing.xml')
 ```
 
 #### Creating android session from desktop session
 ```python
-teleporters = await Teleporter.desktop('tdata')
+teleporters = Teleporter.desktop('tdata')
 for teleporter in teleporters:
-    await teleporter.to_android(f'result/{teleporter.id}/tgnet.dat', f'result/{teleporter.id}/userconfing.xml')
+    teleporter.to_android(f'result/{teleporter.id}/tgnet.dat', f'result/{teleporter.id}/userconfing.xml')
 ```

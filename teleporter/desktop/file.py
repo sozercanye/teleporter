@@ -3,9 +3,7 @@ from pathlib import Path
 from io import BytesIO
 import hashlib
 
-import aiofiles
-
-async def file(
+def file(
     key_file_path: str | Path,
     tdata: str | Path
 ) -> tuple[int, BytesIO]:
@@ -17,23 +15,23 @@ async def file(
         if not file_path.exists():
             continue
 
-        async with aiofiles.open(file_path, 'rb') as f:
-            magic = await f.read(4)
+        with open(file_path, 'rb') as f:
+            magic = f.read(4)
             if magic != b'TDF$':
                 raise ValueError(f'Invalid magic {magic} in file {file_path}.')
-            version = int.from_bytes(await f.read(4), 'little')
+            version = int.from_bytes(f.read(4), 'little')
 
-            bytesdata = await f.read()
-            data_size = len(bytesdata) - 16
+            bytesdata = f.read()
+        data_size = len(bytesdata) - 16
 
-            check_md5 = bytesdata[:data_size]
-            check_md5 += data_size.to_bytes(4, 'little')
-            check_md5 += version.to_bytes(4, 'little')
-            check_md5 += magic
-            check_md5 = hashlib.md5(check_md5).digest()
+        check_md5 = bytesdata[:data_size]
+        check_md5 += data_size.to_bytes(4, 'little')
+        check_md5 += version.to_bytes(4, 'little')
+        check_md5 += magic
+        check_md5 = hashlib.md5(check_md5).digest()
 
-            md5 = bytesdata[data_size:]
-            if check_md5 != md5:
-                raise ValueError(f'Invalid checksum in file {file_path}.')
-            return version, BytesIO(bytesdata[:data_size])
+        md5 = bytesdata[data_size:]
+        if check_md5 != md5:
+            raise ValueError(f'Invalid checksum in file {file_path}.')
+        return version, BytesIO(bytesdata[:data_size])
     raise FileNotFoundError(f'Could not open {key_file_path} with any suffix.')

@@ -1,8 +1,3 @@
-"""
-Desktop class is based on opentele
-https://github.com/thedemons/opentele/tree/1a6f0816eac47ff3cb907af72ed9f8cbbbe8fba0/src/td
-"""
-
 from __future__ import annotations
 from pathlib import Path
 from hashlib import md5
@@ -32,7 +27,7 @@ class Desktop:
     wide_ids_tag: int = 2**32 - 1
 
     @classmethod
-    async def desktop(cls: type['teleporter.Teleporter'],
+    def desktop(cls: type['teleporter.Teleporter'],
         tdata: str | Path,
         passcode: str | bytes = b'',
         key_file_path: str | Path = default_key_file_path
@@ -44,7 +39,7 @@ class Desktop:
 
         accounts = []
 
-        version, b = await file('key_' + key_file_path, tdata)
+        version, b = file('key_' + key_file_path, tdata)
         salt = read(b)
         key_encrypted = read(b)
         info_encrypted = read(b)
@@ -71,7 +66,7 @@ class Desktop:
                         account_key_file_path += chr(ord('A') + (v - 0x0A))
                     data_name_key >>= 4
 
-                _, b = await file(account_key_file_path, tdata)
+                _, b = file(account_key_file_path, tdata)
                 b = decrypt(read(b), local_key)
                 b.seek(b.tell())
 

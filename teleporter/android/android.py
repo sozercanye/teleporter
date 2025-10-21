@@ -4,8 +4,6 @@ import re
 from io import BytesIO
 import base64
 
-import aiofiles
-
 import teleporter
 from teleporter.android import NativeByteBuffer, Auth, Headers, Datacenter
 
@@ -26,14 +24,14 @@ class Android:
     USER_ID_PATTERN = re.compile(rb'<string name="user">(.+)</string>')
 
     @classmethod
-    async def android(cls: type['teleporter.Teleporter'],
+    def android(cls: type['teleporter.Teleporter'],
         tgnet: bytes | str | Path,
         userconfig: bytes | str | Path = None
     ) -> 'teleporter.Teleporter':
         if isinstance(tgnet, bytes): content = tgnet
         else:
-            async with aiofiles.open(tgnet, 'rb') as f:
-                content = await f.read()
+            with open(tgnet, 'rb') as f:
+                content = f.read()
 
         buffer = NativeByteBuffer(content)
         dc_id = buffer._read_headers().dc_id
@@ -43,8 +41,8 @@ class Android:
         if userconfig:
             if isinstance(userconfig, bytes): content = userconfig
             else:
-                async with aiofiles.open(userconfig, 'rb') as f:
-                    content = await f.read()
+                with open(userconfig, 'rb') as f:
+                    content = f.read()
             b = BytesIO(base64.b64decode(cls.USER_ID_PATTERN.search(content).group(1).strip().replace(b'&#10;', b'')))
             kwargs = {
                 'constructor_id': int.from_bytes(b.read(4), 'little'),
@@ -55,7 +53,7 @@ class Android:
 
         return cls(dc_id, auth_key, **kwargs)
 
-    async def to_android(self: 'teleporter.Teleporter',
+    def to_android(self: 'teleporter.Teleporter',
         tgnet: str | Path = None,
         userconfig: str | Path = None,
         is_test: bool = False,
@@ -94,6 +92,6 @@ class Android:
                     path = Path(path)
                 path.parent.mkdir(parents=True, exist_ok=True)
 
-                async with aiofiles.open(path, 'wb') as f:
-                    await f.write(value)
+                with open(path, 'wb') as f:
+                    f.write(value)
         return (result[0] if len(result) == 1 else result) if result else None
