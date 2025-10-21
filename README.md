@@ -1,47 +1,52 @@
 # teleporter [![pypi package](https://img.shields.io/pypi/v/teleporter.svg)](https://pypi.python.org/pypi/teleporter/)
 
-Serializer and deserializer for Telegram Android sessions.
+Serializer and deserializer for Telegram Android and Desktop sessions.
 
 ### Description
 
-This tool can be used to serialize and deserialize sessions on Telegram Android. And remove pin code.
+**teleporter** allows you to serialize and deserialize Telegram session data from Android and Desktop clients.  
+It can extract required data from `tgnet.dat`, `userconfig.xml`, or `tdata` folders, and convert sessions between supported formats (`tgnet`, `telethon`, and `pyrogram`).  
+PIN code removal is supported only for Android sessions.
 
-It can extract any information stored in files/tgnet.dat and all needed information from shared_prefs/userconfing.xml
+### Installation & Update
 
-It also can deserialize existing session into object and convert it into other session formats (currently supported tdata, telethon and tgnet)
+Install or update the package from PyPI:
 
-And you can serialize session manually into mobile tgnet format, all you need is just auth key, datacenter id and user id, it is minimum information needed for almost any session format
-
-### Installation
-
-You can easily set up this package as it is available on pypi by running the following command
 ```bash
-pip install teleporter
+pip install --upgrade teleporter
 ```
 
 ### Usage
 
-#### Converting existing android session into other format
+#### Create a Teleporter instance
+
 ```python
 from teleporter import Teleporter
 
-# both tgnet.dat and userconfing.xml are stored in /data/data/org.telegram.messenger directory
-# if you have more than 1 account you would need to use tgnet.dat from /files/account(account_number)/tgnet.dat
-# and corresponding userconfig.xml file from /shared_prefs/userconfig(account_number).xml
-
-teleporter = Teleporter.android('tgnet.dat', 'userconfing.xml')
-teleporter.dc_id, teleporter.auth_key, teleporter.id
-```
-
-#### Creating android session from dc id, auth key and user id
-```python
+# Create from raw session parameters
 teleporter = Teleporter(dc_id, auth_key, user_id)
-teleporter.to_android('result/tgnet.dat', 'result/userconfing.xml')
+
+# Load from Android session files
+# Located in /data/data/org.telegram.messenger/files
+# and /data/data/org.telegram.messenger/shared_prefs
+teleporter = Teleporter.android('tgnet.dat', 'userconfig.xml')
+
+# Load from Desktop tdata directory
+teleporters = Teleporter.desktop('tdata')
+
+# Load from an existing session file
+teleporter = Teleporter.session('pyrogram.session')
+teleporter = Teleporter.session('telethon.session')
 ```
 
-#### Creating android session from desktop session
+#### Use a Teleporter instance
+
 ```python
-teleporters = Teleporter.desktop('tdata')
-for teleporter in teleporters:
-    teleporter.to_android(f'result/{teleporter.id}/tgnet.dat', f'result/{teleporter.id}/userconfing.xml')
+# Access session parameters
+teleporter.dc_id
+teleporter.auth_key
+teleporter.id
+
+# Serialize to Android format
+teleporter.to_android('tgnet.dat', 'userconfig.xml')
 ```

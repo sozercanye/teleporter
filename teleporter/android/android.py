@@ -37,21 +37,18 @@ class Android:
         dc_id = buffer._read_headers().dc_id
         auth_key = next(datacenter.auth.auth_key_perm for datacenter in buffer._read_datacenters() if datacenter.dc_id == dc_id)
 
-        kwargs = {}
         if userconfig:
             if isinstance(userconfig, bytes): content = userconfig
             else:
                 with open(userconfig, 'rb') as f:
                     content = f.read()
             b = BytesIO(base64.b64decode(cls.USER_ID_PATTERN.search(content).group(1).strip().replace(b'&#10;', b'')))
-            kwargs = {
-                'constructor_id': int.from_bytes(b.read(4), 'little'),
-                'flags': Int._read(b),
-                'flags2': Int._read(b),
-                'id': Long._read(b)
-            }
 
-        return cls(dc_id, auth_key, **kwargs)
+            constructor_id = Int._read(b)
+            b.seek(2 * Int.SIZE, 1) # flags
+            id = Long._read(b)
+            return cls(dc_id, auth_key, id, constructor_id)
+        return cls(dc_id, auth_key)
 
     def to_android(self: 'teleporter.Teleporter',
         tgnet: str | Path = None,
@@ -73,8 +70,8 @@ class Android:
 
         b = BytesIO()
         b.write(Int(self.constructor_id))
-        b.write(Int(self.flags))
-        b.write(Int(self.flags2))
+        b.write(Int(0))
+        b.write(Int(0))
         b.write(Long(self.id))
         userconfig_value = b'''<?xml version='1.0' encoding='UTF-8' standalone='yes'?>
 <map>
