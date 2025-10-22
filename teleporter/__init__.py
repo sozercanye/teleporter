@@ -1,3 +1,2 @@
-__version__ = '3.0.1'
-
+from .__version__ import __version__
 from .teleporter import Teleporter
