@@ -2,6 +2,9 @@ from __future__ import annotations
 from pathlib import Path
 from hashlib import md5
 
+try: import tgcrypto
+except ImportError: tgcrypto = None
+
 import teleporter
 from teleporter.desktop import create_local_key, decrypt, file, read
 
@@ -32,6 +35,9 @@ class Desktop:
         passcode: str | bytes = b'',
         key_file_path: str | Path = default_key_file_path
     ) -> list['teleporter.Teleporter']:
+        if not tgcrypto:
+            raise ImportError('TgCrypto library is needed to work with desktop sessions. Please install it via "pip install TgCrypto==1.2.5".')
+
         if isinstance(passcode, str):
             passcode = passcode.encode('ascii')
         if isinstance(key_file_path, Path):

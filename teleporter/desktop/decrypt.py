@@ -1,14 +1,14 @@
 from io import BytesIO
 from hashlib import sha1
 
-from tgcrypto import ige256_decrypt
-
 from .prepare_aes_old_mtp import prepare_aes_old_mtp
 
 def decrypt(
     encrypted: bytes,
     auth_key: bytes
 ) -> BytesIO:
+    from tgcrypto import ige256_decrypt
+
     encrypted_size = len(encrypted)
     if (encrypted_size <= 16) or (encrypted_size & 0x0F):
         raise ValueError(f'Bad encrypted part size: {encrypted_size}.')
