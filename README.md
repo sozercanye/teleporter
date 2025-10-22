@@ -5,7 +5,7 @@ Serializer and deserializer for Telegram Android and Desktop sessions.
 ### Description
 
 **teleporter** allows you to serialize and deserialize Telegram session data from Android and Desktop clients.  
-It can extract required data from `tgnet.dat`, `userconfig.xml`, or `tdata` folders, and convert sessions between supported formats (`tgnet`, `telethon`, and `pyrogram`).  
+It can extract required data from `tgnet.dat`, `userconfing.xml`, or `tdata` folders, and convert sessions between supported formats (`tgnet`, `telethon`, and `pyrogram`).  
 PIN code removal is supported only for Android sessions.
 
 ### Installation & Update
@@ -29,7 +29,7 @@ teleporter = Teleporter(dc_id=1, auth_key='a916b5302b76209b6920bf6d9bd0e29a5e7b3
 # Load from Android session files
 # Located in /data/data/org.telegram.messenger/files
 # and /data/data/org.telegram.messenger/shared_prefs
-teleporter = Teleporter.android('tgnet.dat', 'userconfig.xml')
+teleporter = Teleporter.android('tgnet.dat', 'userconfing.xml')
 
 # Load from Desktop tdata directory
 teleporters = Teleporter.desktop('tdata')
@@ -51,8 +51,8 @@ teleporter.auth_key
 teleporter.user_id
 
 # Serialize to Android format
-teleporter.to_android('tgnet.dat', 'userconfig.xml')
+teleporter.to_android('tgnet.dat', 'userconfing.xml')
 
 # Serialize to web.telegram.org local storage format
-value = teleporter.to_web()
+account = teleporter.to_web()
 ```
