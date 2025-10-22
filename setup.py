@@ -3,8 +3,13 @@ import setuptools
 
 from teleporter import __version__
 
-with open(Path(__file__).parent / 'README.md') as f:
+directory = Path(__file__).parent
+
+with open(directory / 'README.md') as f:
     long_description = '\n' + f.read()
+
+with open(directory / 'requirements.txt') as f:
+    install_requires = f.read().splitlines()
 
 setuptools.setup(
     name='teleporter',
@@ -16,6 +21,6 @@ setuptools.setup(
     url='https://github.com/sozercanye/teleporter',
     packages=setuptools.find_packages(),
     license='MIT',
-    install_requires=['aiofiles~=25.1.0'],
+    install_requires=install_requires,
     python_requires='>=3.9'
 )
