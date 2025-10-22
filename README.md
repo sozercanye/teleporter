@@ -55,4 +55,10 @@ teleporter.to_android('tgnet.dat', 'userconfing.xml')
 
 # Serialize to web.telegram.org local storage format
 account = teleporter.to_web()
+
+# Serialize to pyrogram format
+teleporter.to_pyrogram('pyrogram.session')
+
+# Serialize to telethon format
+teleporter.to_telethon('telethon.session')
 ```
