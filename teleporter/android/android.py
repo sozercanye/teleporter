@@ -39,8 +39,8 @@ class Android:
         return cls(dc_id, auth_key)
 
     def to_android(self: 'teleporter.Teleporter',
-        tgnet: str | Path = 'tgnet.dat',
-        userconfig: str | Path = 'userconfing.xml',
+        tgnet: str | Path,
+        userconfig: str | Path,
         is_test: bool = False,
         version: int = 5,
         current_dc_version: int = 13,

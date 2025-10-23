@@ -20,8 +20,8 @@ def decrypt_local(
         raise ValueError('Bad decrypt key, data not decrypted — incorrect password?')
 
     full_len = encrypted_size - 16
-    data_len = Int.read(BytesIO(decrypted[:4]), 'little')
+    data_len = Int.read(decrypted[:Int.SIZE], 'little')
 
     if (data_len > len(decrypted)) or (data_len <= full_len - 16) or (data_len < 4):
         raise ValueError(f'Bad decrypted part size: {encrypted_size}, full_len: {full_len}, decrypted size: {len(decrypted)}.')
-    return BytesIO(decrypted[4:data_len])
+    return BytesIO(decrypted[Int.SIZE:data_len])

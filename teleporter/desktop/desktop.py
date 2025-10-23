@@ -6,7 +6,7 @@ except ImportError: tgcrypto = None
 
 import teleporter
 from teleporter.core import Int, Long
-from teleporter.desktop import FileWriteDescriptor, Map, create_local_key, decrypt_local, file, generate_local_key, to_file_part
+from teleporter.desktop import FileWriteDescriptor, Map, create_local_key, decrypt_local, file, generate_local_key, to_file_part, AUTH_KEY_SIZE
 
 def ensure_input(tdata: str | Path, passcode: str | bytes) -> tuple[Path, bytes]:
     if isinstance(tdata, str):
@@ -38,7 +38,7 @@ class Desktop:
         b = file(tdata / f'key_{cls.KEY_FILE_SUFFIX}')
         passcode_key = create_local_key(b.read(Int.read(b)), passcode)
 
-        local_key = decrypt_local(b.read(Int.read(b)), passcode_key).read(256)
+        local_key = decrypt_local(b.read(Int.read(b)), passcode_key).read(AUTH_KEY_SIZE)
         info = decrypt_local(b.read(Int.read(b)), local_key)
 
         accounts = []
@@ -59,9 +59,15 @@ class Desktop:
                     dc_id = Int.read(b, signed=True)
 
                 auth_keys = [
-                    (Int.read(b, signed=True), b.read(256))
+                    (Int.read(b, signed=True), b.read(AUTH_KEY_SIZE))
                     for _ in range(Int.read(b, signed=True))
                 ]
+
+                auth_keys_to_destroy = [
+                    (Int.read(b, signed=True), b.read(AUTH_KEY_SIZE))
+                    for _ in range(Int.read(b, signed=True))
+                ]
+
                 accounts.append(cls(dc_id, next(auth_key for auth_key_dc_id, auth_key in auth_keys if auth_key_dc_id == dc_id), user_id))
         return accounts
 

@@ -8,12 +8,11 @@ setuptools.setup(
     name='teleporter',
     version=__version__,
     author='sozercanye',
-    description='Serializer and deserializer for Telegram Android and Desktop sessions.',
+    description='tool with almost zero dependencies that allows you to switch Telegram session from/to Android, Desktop, Web, Telethon or Pyrogram client',
     long_description_content_type='text/markdown',
     long_description='\n' + open(directory / 'README.md').read(),
     url='https://github.com/sozercanye/teleporter',
     packages=setuptools.find_packages(),
-    license='MIT',
     install_requires=open(directory / 'requirements.txt').read().splitlines(),
     python_requires='>=3.9'
 )

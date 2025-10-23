@@ -1,5 +1,6 @@
 import os
 
+from teleporter.core import Int
 from teleporter.desktop import FileWriteDescriptor, create_local_key
 
 LOCAL_ENCRYPT_SALT_SIZE = 32
@@ -55,7 +56,7 @@ def generate_local_key(
 
         passcode_key_encrypted = FileWriteDescriptor()
         passcode_key_encrypted.encrypted(local_key, passcode_key)
-        passcode_key_encrypted = passcode_key_encrypted.buffer.getvalue()[4:]
+        passcode_key_encrypted = passcode_key_encrypted.buffer.getvalue()[Int.SIZE:]
 
     assert len(passcode_key_encrypted) == LOCAL_ENCRYPT_SALT_SIZE + AUTH_KEY_SIZE
     return local_key, passcode_key_salt, passcode_key, passcode_key_encrypted

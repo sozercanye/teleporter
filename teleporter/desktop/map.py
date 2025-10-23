@@ -6,7 +6,7 @@ class PeerId(int):
     def __new__(cls) -> int:
         raise NotImplementedError
 
-class lsk(int):  # nocov
+class lsk(int):
     user_map = 0x00
     draft = 0x01 # data: PeerId peer
     draft_position = 0x02 # data: PeerId peer

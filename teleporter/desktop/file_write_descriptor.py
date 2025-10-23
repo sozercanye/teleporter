@@ -21,7 +21,7 @@ class FileWriteDescriptor:
         size = len(data)
         if size & 15:
             data = data.ljust(size + 16 - (size & 15), b'\x00')
-        data = Int(size, 'little') + data[4:]
+        data = Int(size, 'little') + data[Int.SIZE:]
 
         hash_data = sha1(data).digest()
         encrypted = hash_data[:16]
