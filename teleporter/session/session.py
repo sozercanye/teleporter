@@ -20,5 +20,5 @@ class Session:
                 dc_id, auth_key = cursor.fetchone()
 
                 cursor = conn.execute(f'select hash from entities where id = 0 limit 1;')
-                user_id = result[0] if (result := cursor.fetchone()) else None
+                user_id = result[0] if (result := cursor.fetchone()) else 0
         return cls(dc_id, auth_key, user_id)

@@ -26,7 +26,7 @@ class Pyrogram:
             );''')
             conn.execute(
                 'insert into sessions values (?, ?, ?, ?, ?, ?, ?);',
-                (self.dc_id, 6, False, self.auth_key, 0, 0, False)
+                (self.dc_id, 6, False, self.auth_key, 0, self.user_id, False)
             )
 
             conn.execute('''create table peers (

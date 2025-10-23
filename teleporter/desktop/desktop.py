@@ -1,97 +1,111 @@
 from __future__ import annotations
 from pathlib import Path
-from hashlib import md5
 
 try: import tgcrypto
 except ImportError: tgcrypto = None
 
 import teleporter
-from teleporter.desktop import create_local_key, decrypt, file, read
+from teleporter.core import Int, Long
+from teleporter.desktop import FileWriteDescriptor, Map, create_local_key, decrypt_local, file, generate_local_key, to_file_part
+
+def ensure_input(tdata: str | Path, passcode: str | bytes) -> tuple[Path, bytes]:
+    if isinstance(tdata, str):
+        tdata = Path(tdata)
+    if isinstance(passcode, str):
+        passcode = passcode.encode('ascii')
+    return tdata, passcode
 
 class Desktop:
-    max_accounts = 3
-    """The maximum amount of accounts a client can have"""
+    APP_VERSION = 3004000
+    TDF_MAGIC = b'TDF$'
+    MT_PROTO_AUTHORIZATION = 75
+    WIDE_IDS_TAG = -1
+    KEY_FILE_SUFFIX = 'data'
 
-    default_key_file_path = 'data'
-    """See `Desktop.key_file`"""
-
-    performance_mode = True
-    """
-    When enabled, `write()` will be 5000x faster.
-    - What it does is using a constant `local_key` rather than generating it everytime when saving tdata.
-    - The average time for generating `local_key` is about `250` to `350` ms, depend on your CPU.
-    - When in performance mode, the average time to generate `local_key` is `0.0628` ms. Which is 5000x faster
-    - Of course this comes with a catch, your `tdata files` will always use a same constant `local_key`. Basicly no protection at all, but who cares?
-
-    ### Notes:
-        Note: Performance mode will be disabled if `passcode` is set.
-    """
-
-    wide_ids_tag: int = 2**32 - 1
+    @staticmethod
+    def _tgcrypto():
+        if not tgcrypto:
+            raise ImportError('TgCrypto library is required for desktop import/export. Please install it via "pip install TgCrypto==1.2.5".')
 
     @classmethod
     def desktop(cls: type['teleporter.Teleporter'],
         tdata: str | Path,
-        passcode: str | bytes = b'',
-        key_file_path: str | Path = default_key_file_path
+        passcode: str | bytes = b''
     ) -> list['teleporter.Teleporter']:
-        if not tgcrypto:
-            raise ImportError('TgCrypto library is needed to work with desktop sessions. Please install it via "pip install TgCrypto==1.2.5".')
+        cls._tgcrypto()
+        tdata, passcode = ensure_input(tdata, passcode)
 
-        if isinstance(passcode, str):
-            passcode = passcode.encode('ascii')
-        if isinstance(key_file_path, Path):
-            key_file_path = str(key_file_path)
+        b = file(tdata / f'key_{cls.KEY_FILE_SUFFIX}')
+        passcode_key = create_local_key(b.read(Int.read(b)), passcode)
+
+        local_key = decrypt_local(b.read(Int.read(b)), passcode_key).read(256)
+        info = decrypt_local(b.read(Int.read(b)), local_key)
 
         accounts = []
+        for _ in range(Int.read(info)):
+            i = Int.read(info)
+            if i >= 0:
+                b = file(tdata / to_file_part(cls.KEY_FILE_SUFFIX))
+                b = decrypt_local(b.read(Int.read(b)), local_key)
 
-        version, b = file('key_' + key_file_path, tdata)
-        salt = read(b)
-        key_encrypted = read(b)
-        info_encrypted = read(b)
+                assert Int.read(b) == cls.MT_PROTO_AUTHORIZATION
+                b.seek(4, 1) # size
 
-        passcode_key = create_local_key(salt, passcode)
-        key_inner_data = decrypt(key_encrypted, passcode_key)
-        local_key = key_inner_data.read(256)
+                user_id = Int.read(b, signed=True)
+                dc_id = Int.read(b, signed=True)
 
-        info = decrypt(info_encrypted, local_key)
-        count = int.from_bytes(info.read(4))
+                if ((user_id << 32) | dc_id) == cls.WIDE_IDS_TAG:
+                    user_id = Long.read(b)
+                    dc_id = Int.read(b, signed=True)
 
-        for _ in range(count):
-            i = int.from_bytes(info.read(4))
-            if (i >= 0) and (i < cls.max_accounts):
-                md5_hash = md5(key_file_path.encode()).digest()
-                data_name_key = int.from_bytes(md5_hash, 'little')
-
-                account_key_file_path = ''
-                for i in range(0, 0x10):
-                    v = data_name_key & 0xF
-                    if v < 0x0A:
-                        account_key_file_path += chr(ord('0') + v)
-                    else:
-                        account_key_file_path += chr(ord('A') + (v - 0x0A))
-                    data_name_key >>= 4
-
-                _, b = file(account_key_file_path, tdata)
-                b = decrypt(read(b), local_key)
-                b.seek(b.tell())
-
-                b.seek(4, 1) # block_id = int.from_bytes(b.read(4))
-                b.seek(4, 1)
-
-                id = int.from_bytes(b.read(4))
-                dc_id = int.from_bytes(b.read(4))
-
-                if (id or dc_id) == cls.wide_ids_tag:
-                    id = int.from_bytes(b.read(8))
-                    dc_id = int.from_bytes(b.read(4))
-
-                auth_key_count = int.from_bytes(b.read(4))
                 auth_keys = [
-                    (int.from_bytes(b.read(4)), b.read(256))
-                    for _ in range(auth_key_count)
+                    (Int.read(b, signed=True), b.read(256))
+                    for _ in range(Int.read(b, signed=True))
                 ]
-                auth_key = next(auth_key for auth_key_dc_id, auth_key in auth_keys if auth_key_dc_id == dc_id)
-
-                accounts.append(cls(dc_id, auth_key, id))
+                accounts.append(cls(dc_id, next(auth_key for auth_key_dc_id, auth_key in auth_keys if auth_key_dc_id == dc_id), user_id))
         return accounts
+
+    def to_desktop(self: 'teleporter.Teleporter',
+        tdata: str | Path,
+        passcode: str | bytes = b'',
+        map: bytes = Map(),
+        performance_mode: bool = True
+    ):
+        self._tgcrypto()
+        tdata, passcode = ensure_input(tdata, passcode)
+
+        path = tdata / to_file_part(self.KEY_FILE_SUFFIX)
+        path.mkdir(parents=True, exist_ok=True)
+
+        local_key, passcode_key_salt, passcode_key, passcode_key_encrypted = generate_local_key(performance_mode, passcode)
+
+        map_ = FileWriteDescriptor()
+        map_.write(b'')
+        map_.write(b'')
+        map_.encrypted(map, local_key)
+        map_.eof(path / 'map')
+
+        b = (
+            Long(self.WIDE_IDS_TAG, signed=True)+
+            Long(self.user_id, signed=True)+
+            Int(self.dc_id, signed=True)+
+            Int(1, signed=True)+ # auth key count
+            Int(self.dc_id, signed=True)+
+            self.auth_key+
+            Int(0, signed=True) # auth key to destroy count
+        )
+
+        mt_proto = FileWriteDescriptor()
+        mt_proto.encrypted(
+            Int(self.MT_PROTO_AUTHORIZATION, signed=True)+
+            Int(len(b)) + b
+        , local_key)
+        mt_proto.eof(path)
+
+        key = FileWriteDescriptor()
+        key.write(passcode_key_salt)
+        key.write(passcode_key_encrypted)
+
+        # account count, account index, active account index
+        key.encrypted(Int(1) + Int(0) + Int(0), local_key)
+        key.eof(tdata / f'key_{self.KEY_FILE_SUFFIX}')

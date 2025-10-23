@@ -1,3 +1,8 @@
+"""
+Android is based on AndroidTelePorter
+https://github.com/batreller/AndroidTelePorter/tree/main/AndroidTelePorter
+"""
+
 from .auth import Auth
 from .datacenter import Datacenter
 from .headers import Headers

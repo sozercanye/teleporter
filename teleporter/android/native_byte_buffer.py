@@ -7,9 +7,10 @@ from __future__ import annotations
 from typing import Literal
 from io import BytesIO
 import time
+import binascii
 
+from teleporter.core import IP
 from teleporter import android
-from teleporter.android.ip import IP
 
 class NativeByteBuffer:
     def __init__(self, data: bytes | bytearray = None):
@@ -42,7 +43,7 @@ class NativeByteBuffer:
             return True
         elif value == 0xbc799737:
             return False
-        raise BufferError('Unexpected byte value.')
+        raise BufferError(f'Unexpected byte value: {value}.')
 
     def read_byte_array(self) -> bytes:
         sl = 1
@@ -154,9 +155,9 @@ class NativeByteBuffer:
                         self.write_int(ip.flags)
 
                     if datacenter.current_version >= 11:
-                        self.write_string(ip.secret)
+                        self.write_byte_array(ip.secret)
                     elif datacenter.current_version >= 9:
-                        raise NotImplementedError('Writing sessions with Datacenter\'s versions 9 and 10 is not supported, please use another version')
+                        raise NotImplementedError('Writing sessions with Datacenter\'s versions 9 and 10 is not supported, please use another version.')
 
             if datacenter.current_version >= 6:
                 self.write_bool(datacenter.is_cdn)
@@ -232,32 +233,21 @@ class NativeByteBuffer:
         ip = IP(ip_type, self.read_string(), self.read_int())
 
         if current_version >= 7:
-            flags = self.read_int()
-        else:
-            flags = 0
-        ip.flags = flags
+            ip.flags = self.read_int()
 
         if current_version >= 11:
-            secret = self.read_string()
-            ip.secret = secret
-
+            ip.secret = self.read_byte_array()
         elif current_version >= 9:
-            secret = self.read_string()
-            if secret:
-                size = len(secret) // 2
-                result = bytearray(size)
-                for i in range(size):
-                    result[i] = int(secret[i * 2:i * 2 + 2], 16)
-                secret = result.decode()
-            ip.secret = secret
-
+            ip.secret = self.read_byte_array()
+            if ip.secret:
+                ip.secret = binascii.unhexlify(ip.secret)
         return ip
 
     def _read_datacenters(self) -> list[android.Datacenter]:
         datacenters = []
-        num_of_datacenters = self.read_int()
+        datacenter_count = self.read_int()
 
-        for i in range(num_of_datacenters):
+        for _ in range(datacenter_count):
             datacenter = android.Datacenter(
                 current_version=self.read_int(),
                 dc_id=self.read_int(),
@@ -268,25 +258,19 @@ class NativeByteBuffer:
                 datacenter.last_init_media_version = self.read_int()
 
             count = 4 if datacenter.current_version >= 5 else 1
+            for i in range(count):
+                type = {
+                    0: 'Ipv4',
+                    1: 'Ipv6',
+                    2: 'Ipv4Download',
+                    3: 'Ipv6Download'
+                }.get(i)
 
-            for b in range(count):
-                array = None
-                if b == 0:
-                    array = 'Ipv4'
-                elif b == 1:
-                    array = 'Ipv6'
-                elif b == 2:
-                    array = 'Ipv4Download'
-                elif b == 3:
-                    array = 'Ipv6Download'
-
-                if array is None:
-                    continue
-
-                ips_amount = self.read_int()
-                for ip_index in range(ips_amount):
-                    ip = self._get_ip(datacenter.current_version, array)
-                    datacenter.ips[array].append(ip)
+                if type:
+                    ip_count = self.read_int()
+                    for _ in range(ip_count):
+                        ip = self._get_ip(datacenter.current_version, type)
+                        datacenter.ips[type].append(ip)
 
             if datacenter.current_version >= 6:
                 datacenter.is_cdn = self.read_bool()

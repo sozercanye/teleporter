@@ -5,20 +5,8 @@ from io import BytesIO
 import base64
 
 import teleporter
+from teleporter.core import Int, Long
 from teleporter.android import NativeByteBuffer, Auth, Headers, Datacenter
-
-class Int(bytes):
-    SIZE = 4
-
-    @classmethod
-    def _read(cls, data: BytesIO, signed: bool = True) -> int:
-        return int.from_bytes(data.read(cls.SIZE), 'little', signed=signed)
-
-    def __new__(cls, value: int, signed: bool = True) -> bytes:
-        return value.to_bytes(cls.SIZE, 'little', signed=signed)
-
-class Long(Int):
-    SIZE = 8
 
 class Android:
     USER_ID_PATTERN = re.compile(rb'<string name="user">(.+)</string>')
@@ -44,21 +32,21 @@ class Android:
                     content = f.read()
             b = BytesIO(base64.b64decode(cls.USER_ID_PATTERN.search(content).group(1).strip().replace(b'&#10;', b'')))
 
-            constructor_id = Int._read(b)
-            b.seek(2 * Int.SIZE, 1) # flags
-            user_id = Long._read(b)
+            constructor_id = Int.read(b, byteorder='little', signed=True)
+            b.seek(2 * Int.SIZE, 1) # flags1 & flags2
+            user_id = Long.read(b, byteorder='little', signed=True)
             return cls(dc_id, auth_key, user_id, constructor_id)
         return cls(dc_id, auth_key)
 
     def to_android(self: 'teleporter.Teleporter',
-        tgnet: str | Path = None,
-        userconfig: str | Path = None,
+        tgnet: str | Path = 'tgnet.dat',
+        userconfig: str | Path = 'userconfing.xml',
         is_test: bool = False,
         version: int = 5,
         current_dc_version: int = 13,
         last_dc_init_version: int = 48502,
         last_dc_media_init_version: int = 48502
-    ) -> list[bytes, bytes] | bytes | None:
+    ):
         buffer = NativeByteBuffer()
         buffer._write_front_headers(Headers(self.dc_id, is_test, version))
         buffer._write_datacenters([Datacenter(
@@ -69,26 +57,22 @@ class Android:
         tgnet_value = buffer.get_value()
 
         b = BytesIO()
-        b.write(Int(self.constructor_id))
-        b.write(Int(0))
-        b.write(Int(0))
-        b.write(Long(self.user_id))
+        b.write(Int(self.constructor_id, byteorder='little', signed=True))
+        b.write(Int(0, byteorder='little', signed=True))
+        b.write(Int(0, byteorder='little', signed=True))
+        b.write(Long(self.user_id, byteorder='little', signed=True))
         userconfig_value = b'''<?xml version='1.0' encoding='UTF-8' standalone='yes'?>
 <map>
     <string name="user">%s</string>
 </map>''' % base64.b64encode(b.getvalue())
 
-        result = []
         for path, value in (
             (tgnet, tgnet_value),
             (userconfig, userconfig_value)
         ):
-            if not path: result.append(value)
-            else:
-                if not isinstance(path, Path):
-                    path = Path(path)
-                path.parent.mkdir(parents=True, exist_ok=True)
+            if not isinstance(path, Path):
+                path = Path(path)
+            path.parent.mkdir(parents=True, exist_ok=True)
 
-                with open(path, 'wb') as f:
-                    f.write(value)
-        return (result[0] if len(result) == 1 else result) if result else None
+            with open(path, 'wb') as f:
+                f.write(value)
