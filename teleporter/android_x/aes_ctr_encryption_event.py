@@ -28,8 +28,7 @@ class AesCtrEncryptionEvent:
         self.key_hash = parser.read_bytes() # HASH_SIZE = 16
 
     def generate_key(self, passcode: bytes) -> bytes:
-        # we use KDF_FAST_ITERATION_COUNT, because we will only use raw_key
-        # see: https://github.com/tdlib/td/blob/cb164927417f22811c74cd8678ed4a5ab7cb80ba/tddb/td/db/binlog/Binlog.cpp#L62
+        # https://github.com/tdlib/td/blob/cb164927417f22811c74cd8678ed4a5ab7cb80ba/tddb/td/db/binlog/Binlog.cpp#L62
         return pbkdf2_hmac('sha256', passcode, self.key_salt, self.KDF_FAST_ITERATION_COUNT if passcode == self.DEFAULT_PASSCODE else self.KDF_ITERATION_COUNT, dklen=self.KEY_SIZE)
 
     @staticmethod

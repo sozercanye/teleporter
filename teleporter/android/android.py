@@ -39,6 +39,7 @@ class Android:
     def to_android(self: 'teleporter.Teleporter',
         tgnet: str | PathLike[str],
         userconfig: str | PathLike[str],
+        constructor_id: int = 34280482,
         is_test: bool = False,
         version: int = 5,
         current_dc_version: int = 13,
@@ -55,7 +56,7 @@ class Android:
         tgnet_value = buffer.get_value()
 
         b = BytesIO()
-        b.write(Int(self.constructor_id, byteorder='little', signed=True))
+        b.write(Int(constructor_id, byteorder='little', signed=True))
         b.write(Int(0, byteorder='little', signed=True))
         b.write(Int(0, byteorder='little', signed=True))
         b.write(Long(self.user_id, byteorder='little', signed=True))

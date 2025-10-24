@@ -8,7 +8,7 @@ setuptools.setup(
     name='teleporter',
     version=__version__,
     author='sozercanye',
-    description='tool with almost zero dependencies that allows you to switch Telegram session from/to Android, Desktop, Web, Telethon or Pyrogram client',
+    description='tool with almost zero dependencies that allows you to switch Telegram session from/to Android, Android X, Desktop, Web, Telethon or Pyrogram client',
     long_description_content_type='text/markdown',
     long_description='\n' + open(directory / 'README.md').read(),
     url='https://github.com/sozercanye/teleporter',
