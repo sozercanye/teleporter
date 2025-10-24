@@ -29,11 +29,11 @@ class Android:
                 content = f.read()
             b = BytesIO(base64.b64decode(cls.USER_ID_PATTERN.search(content).group(1).strip().replace(b'&#10;', b'')))
 
-            constructor_id = Int.read(b, byteorder='little', signed=True)
+            b.seek(Int.SIZE, 1) # constructor_id
             b.seek(Int.SIZE, 1) # flags1
             b.seek(Int.SIZE, 1) # flags2
             user_id = Long.read(b, byteorder='little', signed=True)
-            return cls(dc_id, auth_key, user_id, constructor_id)
+            return cls(dc_id, auth_key, user_id)
         return cls(dc_id, auth_key)
 
     def to_android(self: 'teleporter.Teleporter',
