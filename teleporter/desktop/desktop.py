@@ -1,14 +1,15 @@
 from __future__ import annotations
+from os import PathLike
 from pathlib import Path
 
-try: import tgcrypto
-except ImportError: tgcrypto = None
-
 import teleporter
-from teleporter.core import Int, Long
+from teleporter.core import Int, Long, tgcrypto
 from teleporter.desktop import FileWriteDescriptor, Map, create_local_key, decrypt_local, file, generate_local_key, to_file_part, AUTH_KEY_SIZE
 
-def ensure_input(tdata: str | Path, passcode: str | bytes) -> tuple[Path, bytes]:
+def ensure_input(
+    tdata: str | PathLike[str],
+    passcode: str | bytes
+) -> tuple[Path, bytes]:
     if isinstance(tdata, str):
         tdata = Path(tdata)
     if isinstance(passcode, str):
@@ -22,17 +23,12 @@ class Desktop:
     WIDE_IDS_TAG = -1
     KEY_FILE_SUFFIX = 'data'
 
-    @staticmethod
-    def _tgcrypto():
-        if not tgcrypto:
-            raise ImportError('TgCrypto library is required for desktop import/export. Please install it via "pip install TgCrypto==1.2.5".')
-
     @classmethod
     def desktop(cls: type['teleporter.Teleporter'],
-        tdata: str | Path,
+        tdata: str | PathLike[str],
         passcode: str | bytes = b''
     ) -> list['teleporter.Teleporter']:
-        cls._tgcrypto()
+        tgcrypto()
         tdata, passcode = ensure_input(tdata, passcode)
 
         b = file(tdata / f'key_{cls.KEY_FILE_SUFFIX}')
@@ -72,12 +68,12 @@ class Desktop:
         return accounts
 
     def to_desktop(self: 'teleporter.Teleporter',
-        tdata: str | Path,
+        tdata: str | PathLike[str],
         passcode: str | bytes = b'',
         map: bytes = Map(),
         performance_mode: bool = True
     ):
-        self._tgcrypto()
+        tgcrypto()
         tdata, passcode = ensure_input(tdata, passcode)
 
         path = tdata / to_file_part(self.KEY_FILE_SUFFIX)

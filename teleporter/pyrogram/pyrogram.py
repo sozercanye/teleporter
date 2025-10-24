@@ -1,13 +1,21 @@
 from __future__ import annotations
-from pathlib import Path
+from os import PathLike
 import sqlite3
 
 import teleporter
-from teleporter.session import get_session_file_path
+from teleporter.core import get_session_file_path
 
 class Pyrogram:
+    @classmethod
+    def pyrogram(cls: type['teleporter.Teleporter'],
+        session: str | PathLike[str]
+    ) -> 'teleporter.Teleporter':
+        with sqlite3.connect(get_session_file_path(session)) as conn:
+            cursor = conn.execute(f'select dc_id, auth_key, user_id from sessions limit 1;')
+            return cls(*cursor.fetchone())
+
     def to_pyrogram(self: 'teleporter.Teleporter',
-        session: str | Path
+        session: str | PathLike[str]
     ):
         with sqlite3.connect(get_session_file_path(session)) as conn:
             conn.execute('''create table version (

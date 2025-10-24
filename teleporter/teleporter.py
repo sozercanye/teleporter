@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 from .android import Android
+from .android_x import AndroidX
 from .desktop import Desktop, AUTH_KEY_SIZE
 from .pyrogram import Pyrogram
-from .session import Session
 from .telethon import Telethon
 from .web import Web
 
-class Teleporter(Android, Desktop, Pyrogram, Session, Telethon, Web):
+class Teleporter(Android, AndroidX, Desktop, Pyrogram, Telethon, Web):
     __slots__ = ('dc_id', 'auth_key', 'user_id', 'constructor_id')
 
     def __init__(self,

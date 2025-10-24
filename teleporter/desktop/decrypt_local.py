@@ -17,7 +17,7 @@ def decrypt_local(
     check_hash = sha1(decrypted).digest()[:16]
 
     if check_hash != encrypted_key:
-        raise ValueError('Bad decrypt key, data not decrypted — incorrect password?')
+        raise ValueError('Bad decrypt key, data not decrypted — incorrect passcode?')
 
     full_len = encrypted_size - 16
     data_len = Int.read(decrypted[:Int.SIZE], 'little')

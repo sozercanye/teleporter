@@ -1,13 +1,25 @@
 from __future__ import annotations
-from pathlib import Path
+from os import PathLike
 import sqlite3
 
 import teleporter
-from teleporter.session import get_session_file_path
+from teleporter.core import get_session_file_path
 
 class Telethon:
+    @classmethod
+    def telethon(cls: type['teleporter.Teleporter'],
+        session: str | PathLike[str]
+    ) -> 'teleporter.Teleporter':
+        with sqlite3.connect(get_session_file_path(session)) as conn:
+            cursor = conn.execute(f'select dc_id, auth_key from sessions limit 1;')
+            dc_id, auth_key = cursor.fetchone()
+
+            cursor = conn.execute(f'select hash from entities where id = 0 limit 1;')
+            user_id = result[0] if (result := cursor.fetchone()) else 0
+            return cls(dc_id, auth_key, user_id)
+
     def to_telethon(self: 'teleporter.Teleporter',
-        session: str | Path
+        session: str | PathLike[str]
     ):
         with sqlite3.connect(get_session_file_path(session)) as conn:
             conn.execute('''create table version (
