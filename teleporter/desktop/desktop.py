@@ -13,7 +13,7 @@ def ensure_input(
     if isinstance(tdata, str):
         tdata = Path(tdata)
     if isinstance(passcode, str):
-        passcode = passcode.encode('ascii')
+        passcode = passcode.encode()
     return tdata, passcode
 
 class Desktop:

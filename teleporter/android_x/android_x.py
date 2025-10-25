@@ -14,14 +14,10 @@ def to_int(data: bytes) -> int:
 class AndroidX:
     @classmethod
     def android_x(cls: type['teleporter.Teleporter'],
-        td: str | PathLike[str],
-        passcode: str | bytes = AesCtrEncryptionEvent.DEFAULT_PASSCODE
+        td: str | PathLike[str]
     ) -> 'teleporter.Teleporter':
         tgcrypto()
         from tgcrypto import ctr256_encrypt
-
-        if isinstance(passcode, str):
-            passcode = passcode.encode()
 
         with open(td, 'rb') as f:
             content = f.read()
@@ -30,7 +26,7 @@ class AndroidX:
         event = parser.read_next_event()
         event.validate()
         aes_encryption_event = AesCtrEncryptionEvent(event.event_data)
-        secret_key = aes_encryption_event.generate_key(passcode)
+        secret_key = aes_encryption_event.generate_key(AesCtrEncryptionEvent.DEFAULT_PASSCODE)
 
         if aes_encryption_event.generate_hash(secret_key) != aes_encryption_event.key_hash:
             raise ValueError('Bad decrypt key, data not decrypted — incorrect passcode?')
