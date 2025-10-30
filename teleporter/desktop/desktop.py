@@ -1,6 +1,7 @@
 from __future__ import annotations
 from os import PathLike
 from pathlib import Path
+from io import BytesIO
 
 import teleporter
 from teleporter.core import Int, Long, tgcrypto
@@ -110,6 +111,11 @@ class Desktop:
             key.write(passcode_key_salt)
             key.write(passcode_key_encrypted)
 
-        # account count, account index, active account index
-        key.encrypted(Int(len(teleporters)) + Int(0) + Int(0), local_key)
+        b = BytesIO()
+        b.write(Int(len(teleporters))) # account count
+        for i, _ in enumerate(teleporters):
+            b.write(Int(i)) # account index
+        b.write(Int(0)) # active account index
+
+        key.encrypted(b.getvalue(), local_key)
         key.eof(tdata / f'key_{cls.KEY_FILE_SUFFIX}')
