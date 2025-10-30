@@ -38,10 +38,10 @@ class Desktop:
         info = decrypt_local(b.read(Int.read(b)), local_key)
 
         accounts = []
-        for _ in range(Int.read(info)):
-            i = Int.read(info)
-            if i >= 0:
-                b = file(tdata / to_file_part(cls.KEY_FILE_SUFFIX))
+        for i, _ in enumerate(range(Int.read(info)), 1):
+            index = Int.read(info)
+            if index >= 0:
+                b = file(tdata / to_file_part(cls.KEY_FILE_SUFFIX, i))
                 b = decrypt_local(b.read(Int.read(b)), local_key)
 
                 assert Int.read(b) == cls.MT_PROTO_AUTHORIZATION
@@ -67,7 +67,9 @@ class Desktop:
                 accounts.append(cls(dc_id, next(auth_key for auth_key_dc_id, auth_key in auth_keys if auth_key_dc_id == dc_id), user_id))
         return accounts
 
-    def to_desktop(self: 'teleporter.Teleporter',
+    @classmethod
+    def to_desktop(cls,
+        teleporters: list['teleporter.Teleporter'],
         tdata: str | PathLike[str],
         passcode: str | bytes = b'',
         map: bytes = Map(),
@@ -76,38 +78,38 @@ class Desktop:
         tgcrypto()
         tdata, passcode = ensure_input(tdata, passcode)
 
-        path = tdata / to_file_part(self.KEY_FILE_SUFFIX)
-        path.mkdir(parents=True, exist_ok=True)
-
         local_key, passcode_key_salt, passcode_key, passcode_key_encrypted = generate_local_key(performance_mode, passcode)
-
         map_ = FileWriteDescriptor()
         map_.write(b'')
         map_.write(b'')
         map_.encrypted(map, local_key)
-        map_.eof(path / 'map')
 
-        b = (
-            Long(self.WIDE_IDS_TAG, signed=True)+
-            Long(self.user_id, signed=True)+
-            Int(self.dc_id, signed=True)+
-            Int(1, signed=True)+ # auth key count
-            Int(self.dc_id, signed=True)+
-            self.auth_key+
-            Int(0, signed=True) # auth key to destroy count
-        )
+        for i, teleporter in enumerate(teleporters, 1):
+            path = tdata / to_file_part(cls.KEY_FILE_SUFFIX, i)
+            path.mkdir(parents=True, exist_ok=True)
+            map_.eof(path / 'map')
 
-        mt_proto = FileWriteDescriptor()
-        mt_proto.encrypted(
-            Int(self.MT_PROTO_AUTHORIZATION, signed=True)+
-            Int(len(b)) + b
-        , local_key)
-        mt_proto.eof(path)
+            b = (
+                Long(cls.WIDE_IDS_TAG, signed=True)+
+                Long(teleporter.user_id, signed=True)+
+                Int(teleporter.dc_id, signed=True)+
+                Int(1, signed=True)+ # auth key count
+                Int(teleporter.dc_id, signed=True)+
+                teleporter.auth_key+
+                Int(0, signed=True) # auth key to destroy count
+            )
 
-        key = FileWriteDescriptor()
-        key.write(passcode_key_salt)
-        key.write(passcode_key_encrypted)
+            mt_proto = FileWriteDescriptor()
+            mt_proto.encrypted(
+                Int(cls.MT_PROTO_AUTHORIZATION, signed=True)+
+                Int(len(b)) + b
+            , local_key)
+            mt_proto.eof(path)
+
+            key = FileWriteDescriptor()
+            key.write(passcode_key_salt)
+            key.write(passcode_key_encrypted)
 
         # account count, account index, active account index
-        key.encrypted(Int(1) + Int(0) + Int(0), local_key)
-        key.eof(tdata / f'key_{self.KEY_FILE_SUFFIX}')
+        key.encrypted(Int(len(teleporters)) + Int(0) + Int(0), local_key)
+        key.eof(tdata / f'key_{cls.KEY_FILE_SUFFIX}')

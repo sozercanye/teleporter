@@ -52,7 +52,7 @@ teleporter.dc_id, teleporter.auth_key, teleporter.user_id
 teleporter.to_android('tgnet.dat', 'userconfing.xml')
 
 # Export to use on Desktop
-teleporter.to_desktop('tdata')
+Teleporter.to_desktop([teleporter], 'tdata')
 
 # Export to put into web.telegram.org local storage
 account = teleporter.to_web()

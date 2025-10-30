@@ -26,7 +26,7 @@ class AndroidX:
         event = parser.read_next_event()
         event.validate()
         aes_encryption_event = AesCtrEncryptionEvent(event.event_data)
-        secret_key = aes_encryption_event.generate_key(AesCtrEncryptionEvent.DEFAULT_PASSCODE)
+        secret_key = aes_encryption_event.generate_key()
 
         if aes_encryption_event.generate_hash(secret_key) != aes_encryption_event.key_hash:
             raise ValueError('Bad decrypt key, data not decrypted — incorrect passcode?')

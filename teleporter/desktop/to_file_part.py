@@ -2,7 +2,10 @@ from hashlib import md5
 
 from teleporter.core import Int
 
-def to_file_part(key_file_suffix: str) -> str:
+def to_file_part(key_file_suffix: str, i: int) -> str:
+    if i > 1:
+        key_file_suffix += f'#{i}'
+
     md5_hash = md5(key_file_suffix.encode()).digest()
     data_name_key = Int.read(md5_hash, 'little')
 

@@ -5,12 +5,12 @@ from teleporter import android_x
 
 # https://github.com/tdlib/td/blob/cb164927417f22811c74cd8678ed4a5ab7cb80ba/tddb/td/db/binlog/Binlog.cpp#L31
 class AesCtrEncryptionEvent:
-    MIN_SALT_SIZE = 16  # it isn't used
-    DEFAULT_SALT_SIZE = 32  # it isn't used
+    MIN_SALT_SIZE = 16 # it isn't used
+    DEFAULT_SALT_SIZE = 32 # it isn't used
     KEY_SIZE = 32
-    IV_SIZE = 16  # it isn't used
-    HASH_SIZE = 32  # it isn't used
-    KDF_ITERATION_COUNT = 60002  # it isn't used
+    IV_SIZE = 16 # it isn't used
+    HASH_SIZE = 32 # it isn't used
+    KDF_ITERATION_COUNT = 60002 # it isn't used
     KDF_FAST_ITERATION_COUNT = 2
 
     DEFAULT_PASSCODE = b'cucumber'
@@ -27,7 +27,7 @@ class AesCtrEncryptionEvent:
         self.iv = parser.read_bytes() # IV_SIZE = 16
         self.key_hash = parser.read_bytes() # HASH_SIZE = 16
 
-    def generate_key(self, passcode: bytes) -> bytes:
+    def generate_key(self, passcode: bytes = DEFAULT_PASSCODE) -> bytes:
         # https://github.com/tdlib/td/blob/cb164927417f22811c74cd8678ed4a5ab7cb80ba/tddb/td/db/binlog/Binlog.cpp#L62
         return pbkdf2_hmac('sha256', passcode, self.key_salt, self.KDF_FAST_ITERATION_COUNT if passcode == self.DEFAULT_PASSCODE else self.KDF_ITERATION_COUNT, dklen=self.KEY_SIZE)
 
