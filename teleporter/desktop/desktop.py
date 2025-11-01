@@ -39,10 +39,10 @@ class Desktop:
         info = decrypt_local(b.read(Int.read(b)), local_key)
 
         accounts = []
-        for i, _ in enumerate(range(Int.read(info)), 1):
+        for i in range(Int.read(info)):
             index = Int.read(info)
             if index >= 0:
-                b = file(tdata / to_file_part(cls.KEY_FILE_SUFFIX, i))
+                b = file(tdata / to_file_part(cls.KEY_FILE_SUFFIX, i + 1))
                 b = decrypt_local(b.read(Int.read(b)), local_key)
 
                 assert Int.read(b) == cls.MT_PROTO_AUTHORIZATION
@@ -85,8 +85,12 @@ class Desktop:
         map_.write(b'')
         map_.encrypted(map, local_key)
 
-        for i, teleporter in enumerate(teleporters, 1):
-            path = tdata / to_file_part(cls.KEY_FILE_SUFFIX, i)
+        key_b = BytesIO()
+        key_b.write(Int(len(teleporters))) # account count
+
+        for i, teleporter in enumerate(teleporters):
+            key_b.write(Int(i)) # account index
+            path = tdata / to_file_part(cls.KEY_FILE_SUFFIX, i + 1)
             path.mkdir(parents=True, exist_ok=True)
             map_.eof(path / 'map')
 
@@ -107,15 +111,9 @@ class Desktop:
             , local_key)
             mt_proto.eof(path)
 
-            key = FileWriteDescriptor()
-            key.write(passcode_key_salt)
-            key.write(passcode_key_encrypted)
-
-        b = BytesIO()
-        b.write(Int(len(teleporters))) # account count
-        for i, _ in enumerate(teleporters):
-            b.write(Int(i)) # account index
-        b.write(Int(0)) # active account index
-
-        key.encrypted(b.getvalue(), local_key)
+        key = FileWriteDescriptor()
+        key.write(passcode_key_salt)
+        key.write(passcode_key_encrypted)
+        key_b.write(Int(0)) # active account index
+        key.encrypted(key_b.getvalue(), local_key)
         key.eof(tdata / f'key_{cls.KEY_FILE_SUFFIX}')
