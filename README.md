@@ -54,6 +54,11 @@ teleporter.to_android('tgnet.dat', 'userconfing.xml')
 # Export to use on Desktop
 Teleporter.to_desktop([teleporter], 'tdata')
 
+# Export in-memory to use on Desktop
+zip_bytes = Teleporter.to_desktop([teleporter])
+with open('tdata.zip', 'wb') as f:
+    f.write(zip_bytes)
+
 # Export to put into web.telegram.org local storage
 account = teleporter.to_web()
 print(account)
